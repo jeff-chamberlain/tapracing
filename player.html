@@ -1,17 +1,16 @@
 <html>
 <head>
     <title>PLAYER</title>
-    <script src="/node_modules/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
 <button id="join">Join Game!</button>
 <button id="tap">Tap!</button>
 
-<script src="/socket.io/socket.io.js"></script>
 <script>
 
-    var socket = io.connect();
+    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/player');
 
     socket.on('msg', function(msg) {
         var event = msg.event;
