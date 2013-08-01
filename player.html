@@ -2,6 +2,7 @@
 <head>
     <title>PLAYER</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <style>
 body {
 	background-color: #000;
@@ -66,14 +67,12 @@ button:active {
 <div id="winMessage" class="fullscreen">
 	<p id="winP"></p>
 </div>
-<button id="tap" class="fullscreen">Go!</button>
+<div id="touchArea" class="fullscreen"><p id="touchText"></p></div>
 <div id="hideOnStart" class="fullscreen">
-	<div style="height:30%;"></div>
 	<p id="waitP"></p>
 <div>
 <button id="ready" class="fullscreen">Ready!</button>
 <div id="hideOnJoin" class="fullscreen">
-	<div style="height:30%;"></div>
 	<input type="text" name="nameinput" id="playername" value="Enter your name"/>
 	<br><br>
 	<button id="join">Join Game!</button>
@@ -81,7 +80,7 @@ button:active {
 
 <script>
 	
-    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/player');//localhost:5000/game');
+    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/player');//localhost:5000/player');
 
     socket.on('msg', function(msg) {
         var event = msg.event;
@@ -90,6 +89,7 @@ button:active {
             case 'start':
                 clearTimeout(timeout);
                 document.getElementById('hideOnStart').style.visibility = "hidden";
+                $('#touchText').text('GO!');
                 break;
             case 'stop':
                 document.getElementById('tap').style.visibility = "hidden";
@@ -107,10 +107,54 @@ button:active {
 	var waitText = "Waiting for game to start";
 	var waitCount = 0;
 	
-    document.getElementById('tap').addEventListener('click', function(evt) {
+	var $touchArea = $('#touchArea');
+    /*touchStarted = false, // detect if a touch event is sarted
+    currX = 0,
+    currY = 0,
+    cachedX = 0,
+    cachedY = 0;*/
+
+	//setting the events listeners
+	$touchArea.on('touchstart mousedown',function (e){
+		e.preventDefault();
+		$('#touchText').text('OUCH!');
+		/*// caching the current x
+		cachedX = e.pageX;
+		// caching the current y
+		cachedY = e.pageY;
+		// a touch event is detected      
+		touchStarted = true;
+		$touchArea.text('Touchstarted');
+		// detecting if after 200ms the finger is still in the same position
+		setTimeout(function (){
+			currX = e.pageX;
+			currY = e.pageY;
+			if ((cachedX === currX) && !touchStarted && (cachedY === currY)) {
+				// Here you get the Tap event
+				$touchArea.text('Tap');
+			}
+		},200);*/
+	});
+	$touchArea.on('touchend mouseup touchcancel',function (e){
+		e.preventDefault();
+		$('#touchText').text('GO!');
+		socket.emit('msg', {event: 'tap'});
+		// here we can consider finished the touch event
+		//touchStarted = false;
+		
+	});
+	/*$touchArea.on('touchmove mousemove',function (e){
+		e.preventDefault();
+		if(touchStarted) {
+			 // here you are swiping
+			 $touchArea.text('Swiping');
+		}
+	});*/
+	
+    /*document.getElementById('tap').addEventListener('click', function(evt) {
     	console.log( "Tapping" );
         socket.emit('msg', {event: 'tap'});
-    });
+    });*/
     
     document.getElementById('playername').addEventListener('click', function(evt) {
     	this.value = "";
