@@ -10,7 +10,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/');
+    var socket = io.connect('http://thawing-stream-1812.herokuapp.com:80/');
 
     socket.on('msg', function(msg) {
         var event = msg.event,
