@@ -7,9 +7,12 @@
 
 <button id="start">Start</button>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 
-    var socket = io.connect('http://localhost:8888/game');
+    var href = document.location.protocol + document.location.hostname;
+	console.log('href = ' + href);
+	var socket = io.connect(href);
 
     socket.on('msg', function(msg) {
         var event = msg.event,
