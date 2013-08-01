@@ -24,8 +24,11 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
         
 			switch(event) {
 				case 'join':
-					console.log( "Player " + name + " has joined!" );
-					addPlayer( playerid, name );
+					if( gameState != 'running' && gameState != 'finished' ) {
+						gameState = 'waiting';
+						console.log( "Player " + name + " has joined!" );
+						addPlayer( playerid, name );
+					}
 					break;
 				case 'leave':
 					if( playerid in players ) {
@@ -34,10 +37,14 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 					}
 					break;
 				case 'ready':
-					playerReady( playerid );
+					if( playerid in players ) {
+						playerReady( playerid );
+					}
 					break;
 				case 'tap':
-					playerTap( playerid );
+					if( playerid in players ) {
+						playerTap( playerid );
+					}
 					break;
 			}
     });
@@ -51,34 +58,45 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 	var winW;
 	var winH;
 	var finishLine;
+	var boxFinish;
 
-	var gameState = "waiting"; // waiting, ready, running, finished
+	var gameState = 'waiting'; // waiting, ready, running, finished
 	var currentMenu = null;
 	var winningCount = 200;
 	var countdownVal = '';
-	var timeout;
+	var messageTimeout;
+	var messageText;
+	var messageCount = 0;
+	var showGo;
 	var interval;
 	var players = {};
 	var playerNum = 0;
+	var boxWidth;
+	var boxStart = 20;
+	var winningPlayer;
 	
 	function CanvasInit() {		
 		canvasRef = document.getElementById('canvas');
 	
 		winH = window.innerHeight;
 		winW = window.innerWidth;
-		finishLine = winW - 50;
+		finishLine = Math.floor( winW * 0.9 );
 		canvasRef.height = winH;
 		canvasRef.width  = winW;
 	
 		context = canvasRef.getContext('2d');
-	
+		
+		waitingMessage();
+		
 		interval = setInterval( draw, 33 );
 	}
 
 	function addPlayer( id, name ) {
 		playerNum ++;
+		boxWidth = winH / ( ( playerNum * 2 ) + 1);
+		boxFinish = finishLine - 20 - boxWidth;
 		var playerColor = xRgbToHex(Math.floor(Math.random()*255),Math.floor(Math.random()*255),Math.floor(Math.random()*255));
-		players[id] = { position: playerNum - 1, name: name, color: playerColor, count: 0, ready: 0 };
+		players[id] = { position: playerNum - 1, name: name, nameColor: '#fe1a00', color: playerColor, count: 0, ready: 0 };
 	}
 	function losePlayer( id ) {
 		playerNum --;
@@ -87,6 +105,7 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 	function playerReady( id ) {
 		if( players[id].ready == 0 ) {
 			players[id].ready = 1;
+			players[id].nameColor = '#77d42a';
 		}
 		console.log( 'Player ' + players[id].name + ' is ready!' );
 		var readyCount = 0;
@@ -94,61 +113,58 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 			readyCount += players[id].ready;
 		}
 		if( readyCount == playerNum ) {
-			socket.emit('msg', {event: 'start'});
+			getReady();
 		}
 	}
 	function playerTap( id ) {
 		players[id].count ++;
+		if( players[id].count == winningCount ) {
+			finishGame( id );
+		}
+	}
+	function getReady() {
+		clearTimeout(messageTimeout);
+		gameState = 'ready';
+		messageText = 'Starting game in...';
+		messageCount = 4;
+		countdownVal = '';
+		countDown();
 	}
 	function startGame() {
-		console.log( 'starting the game!' );
+		gameState = 'running';
+		clearTimeout(messageTimeout);
+		messageText = 'GO!';
+		showGo = true;
+		messageTimeout = setTimeout(eraseGo, 3000);
+		socket.emit('msg', {event: 'start'});
+	}
+	function finishGame( winningId ) {
+		gameState = 'finished';
+		winningPlayer = players[winningId].name;
+		messageText = 'is the winner!';
+		for( var id in players ) {
+			delete players[id];
+		}
+		socket.emit('msg', {event: 'stop', winName: winningPlayer});
 	}
 	function drawPlayers() {
-		boxWidth = winH / ( ( playerNum * 2 ) + 1);
 		for( var id in players ) {
 			var index = players[id].position;
 			var name = players[id].name;
 			var color = players[id].color;
 			var progress = players[id].count / winningCount;
 			var boxY = boxWidth + ( index * 2 * boxWidth );
-			var boxX = xLerp(10, finishLine, progress );
+			var boxX = xLerp(10, boxFinish, progress );
 			context.fillStyle = color;
 			context.fillRect(boxX,boxY,boxWidth,boxWidth);
 			var nameX = boxX + ( boxWidth / 2 );
 			var nameY = boxY - 20;
-			context.fillStyle = 'red';
+			context.fillStyle = players[id].nameColor;
 			context.textAlign = 'center';
 			context.textBaseline = 'middle';
 			context.font = '40px _sans'; // use 20 pixel sans serif font
 			context.fillText(name,nameX,nameY); // write text
 		}
-	}
-	function drawCountDown() {
-		context.clearRect( winW/4, winH/4, winW/2, winH/2 );
-		var countdownText = 'Starting game in...'
-		var textX = winW / 2;
-		var textY = winH / 2;
-		context.fillStyle = 'white';
-		context.textAlign = 'center';
-		context.textBaseline = 'middle';
-		context.font = '50px _sans'; // use 20 pixel sans serif font
-		context.fillText(countdownText,textX,textY); // write text
-		context.font = '75px _sans'; // use 20 pixel sans serif font
-		context.fillText(countdownVal,textX,textY + 75); // write text
-		if( countdownVal == '' ) {
-			countdownVal = 3;
-			timeout = setTimeout( countDown, 1000 );
-		}
-		else {
-			countdownVal --;
-			if( countdownVal > 0 ) {
-				timeout = setTimeout( countDown, 1000 );
-			}
-			else {
-				startGame();
-			}
-		}
-	
 	}
 	function drawBackground() {
 		context.clearRect(0,0,winW,winH);
@@ -156,27 +172,104 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 		context.fillRect(0,0,winW,winH);
 	}
 	function drawFinishLine() {
-		context.fillStyle = 'white';
-		context.fillRect(finishLine-20,0,40,winH);
+		var lineY = 0;
+		var side = 0;
+		while( lineY < winH ) {
+			if( side == 0 ) {
+				context.fillStyle = 'white';
+				context.fillRect(finishLine-20,lineY,20,20);
+				context.fillStyle = 'red';
+				context.fillRect(finishLine,lineY,20,20);
+				side = 1;
+			}
+			else {
+				context.fillStyle = 'red';
+				context.fillRect(finishLine-20,lineY,20,20);
+				context.fillStyle = 'white';
+				context.fillRect(finishLine,lineY,20,20);
+				side = 0;
+			}
+			lineY += 20;
+		}
+	}
+	function drawMessage() {
+		var textX = winW / 2;
+		var textY = winH / 2;
+		switch( gameState ) {
+			case "waiting":
+				context.fillStyle = 'white';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.font = '50px _sans';
+				context.fillText(messageText,textX,textY);
+				break;
+			case "ready":
+				context.fillStyle = 'white';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.font = '50px _sans';
+				context.fillText(messageText,textX,textY);
+				context.font = '100px _sans';
+				context.fillText(countdownVal,textX,textY + 100);
+				break;
+			case "running":
+				if( showGo ) {
+					context.fillStyle = 'white';
+					context.textAlign = 'center';
+					context.textBaseline = 'middle';
+					context.font = '100px _sans';
+					context.fillText(messageText,textX,textY);
+				}
+				break;
+			case "finished":
+				context.fillStyle = '#FDD017';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				context.font = '250px _sans';
+				context.fillText(winningPlayer,textX,textY);
+				context.fillStyle = 'white';
+				context.font = '100px _sans';
+				context.fillText(messageText,textX,textY + 250);
+				break;
+		}
+	}
+	function waitingMessage() {
+		var text = "Waiting for more players";
+		for( var i = 0; i < messageCount; i ++ ) {
+			text += ".";
+		}
+		messageText = text;
+		if( messageCount == 3 ) {
+			messageCount = 0;
+		}
+		else {
+			messageCount ++;
+		}		
+		messageTimeout = setTimeout(waitingMessage,1000);
+	}
+	function countDown() {
+		if( messageCount == 4 ) {
+			messageCount --;
+			messageTimeout = setTimeout( countDown, 1000 );
+		}
+		else if( messageCount < 4 && messageCount > 0 ) {
+			countdownVal = messageCount;
+			messageCount --;
+			messageTimeout = setTimeout( countDown, 1000 );
+		}
+		else {
+			startGame();
+		}
+	}
+	function eraseGo() {
+		showGo = false;
+		clearTimeout(messageTimeout);
 	}
 	function draw() {
 		drawBackground();
 		drawFinishLine();
 		drawPlayers();
-		switch( gameState ) {
-			case "waiting":
-			
-			break;
-			case "ready":
-		
-			break;
-			case "running":
-		
-			break;
-			case "finished":
-		
-			break;
-		}
+		drawMessage();
 	}
 	function xTime() {
 		var d = new Date();

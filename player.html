@@ -81,7 +81,8 @@ button:active {
 <script>
 	
     var socket = io.connect('http://thawing-stream-1812.herokuapp.com/player');//localhost:5000/player');
-
+	var playerName;
+	
     socket.on('msg', function(msg) {
         var event = msg.event;
         
@@ -92,14 +93,19 @@ button:active {
                 $('#touchText').text('GO!');
                 break;
             case 'stop':
-                document.getElementById('tap').style.visibility = "hidden";
-                var winString = msg.winName + " is the winner!";
-                document.getElementById('winP').innerHTML = winString;
+                document.getElementById('touchArea').style.visibility = "hidden";
+                if( msg.winName == playerName ) {
+                	document.getElementById('winP').innerHTML = 'You WON!!!';
+				}
+				else {
+					document.getElementById('winP').innerHTML = ':(';
+				}
                 break;
         }
     });
     
-    window.onbeforeunload = function() {
+    window.addEventListener('unload', depart, false);
+    function depart() {
 		socket.emit('msg', {event: 'leave'});
 	};
 	
@@ -163,9 +169,9 @@ button:active {
     document.getElementById('join').addEventListener('click', function(evt) {
     	console.log( "Joining" );
     	var inputname = document.getElementById('playername').value;
+    	playerName = inputname;
         socket.emit('msg', {event: 'join', name: inputname } );
 		document.getElementById('hideOnJoin').style.visibility = "hidden";
-        console.log( 'Your name is ' + inputname );
     });
     
     document.getElementById('ready').addEventListener('click', function(evt) {
