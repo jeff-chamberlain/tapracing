@@ -12,7 +12,7 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 </canvas>
 
 <script>
-    var socket = io.connect('http://localhost:5000/game');//thawing-stream-1812.herokuapp.com/game');
+    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/game');//localhost:5000/game');
 
     socket.on('msg', function(msg) {
         var event = msg.event,

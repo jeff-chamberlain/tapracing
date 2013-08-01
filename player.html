@@ -81,7 +81,7 @@ button:active {
 
 <script>
 	
-    var socket = io.connect('http://localhost:5000/player');//http://thawing-stream-1812.herokuapp.com/player');
+    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/game');//localhost:5000/game');
 
     socket.on('msg', function(msg) {
         var event = msg.event;
