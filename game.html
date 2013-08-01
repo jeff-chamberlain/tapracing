@@ -1,0 +1,46 @@
+<html>
+<head>
+    <title>GAME</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<button id="start">Start</button>
+
+<script>
+
+    var socket = io.connect('http://localhost:8888/game');
+
+    socket.on('msg', function(msg) {
+        var event = msg.event,
+            playerid = msg.playerid;
+        
+        switch(event) {
+            case 'join':
+                
+                console.log('player ' + playerid + ' joined the game!');
+                
+                break;
+            
+            case 'leave':
+                
+                console.log('player ' + playerid + ' left the game!');
+                
+                break;
+
+            case 'tap':
+
+                console.log('player ' + playerid + ' tapped!');
+
+                break;
+        }
+    });
+
+    document.getElementById('start').addEventListener('click', function(evt) {
+        socket.emit('msg', {event: 'start'});
+    });
+
+</script>
+
+</body>
+</html>
