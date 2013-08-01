@@ -2,43 +2,150 @@
 <head>
     <title>PLAYER</title>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+body {
+	background-color: #000;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	overflow: hidden;
+	
+	color:#fff;
+	text-align:center;
+	font-family:"Trebuchet MS", Arial, Helvetica, sans-serif;
+	font-weight:bold;
+}
+#playername {
+	width: 500px;
+	height: 80px;
+	color:#77d42a;
+	font-family:arial;
+	font-size:50px;
+	font-weight:bold;
+	text-align:center;
+}
+#join {
+	width: 300px;
+	height: 300px;
+}
+div {
+	background-color:#000000;
+	text-align:center;
+}
+p {
+	color:#ffffff;
+	font-family:arial;
+	font-size:80px;
+	font-weight:bold;
+	text-decoration:none;
+}
+button {
+	border:none;
+	background-color:#fe1a00;
+	color:#ffffff;
+	font-family:arial;
+	font-size:80px;
+	font-weight:bold;
+	text-decoration:none;
+}
+button:active {
+	background-color:#77d42a;
+	color:#000000;
+}
+.fullscreen {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+</style>
 </head>
 <body>
-
-<button id="join">Join Game!</button>
-<button id="tap">Tap!</button>
+<div id="winMessage" class="fullscreen">
+	<p id="winP"></p>
+</div>
+<button id="tap" class="fullscreen">Go!</button>
+<div id="hideOnStart" class="fullscreen">
+	<div style="height:30%;"></div>
+	<p id="waitP"></p>
+<div>
+<button id="ready" class="fullscreen">Ready!</button>
+<div id="hideOnJoin" class="fullscreen">
+	<div style="height:30%;"></div>
+	<input type="text" name="nameinput" id="playername" value="Enter your name"/>
+	<br><br>
+	<button id="join">Join Game!</button>
+</div>
 
 <script>
-
-    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/player');
+	
+    var socket = io.connect('http://localhost:5000/player');//http://thawing-stream-1812.herokuapp.com/player');
 
     socket.on('msg', function(msg) {
         var event = msg.event;
         
         switch(event) {
             case 'start':
-                
-                console.log('go!');
-                
+                clearTimeout(timeout);
+                document.getElementById('hideOnStart').style.visibility = "hidden";
                 break;
-            
             case 'stop':
-                
-                console.log('game over!');
-                
+                document.getElementById('tap').style.visibility = "hidden";
+                var winString = msg.winName + " is the winner!";
+                document.getElementById('winP').innerHTML = winString;
                 break;
         }
     });
-
+    
+    window.onbeforeunload = function() {
+		socket.emit('msg', {event: 'leave'});
+	};
+	
+	var timeout = null;
+	var waitText = "Waiting for game to start";
+	var waitCount = 0;
+	
     document.getElementById('tap').addEventListener('click', function(evt) {
+    	console.log( "Tapping" );
         socket.emit('msg', {event: 'tap'});
     });
     
-    document.getElementById('join').addEventListener('click', function(evt) {
-        socket.emit('msg', {event: 'join'});
+    document.getElementById('playername').addEventListener('click', function(evt) {
+    	this.value = "";
     });
+    
+    document.getElementById('join').addEventListener('click', function(evt) {
+    	console.log( "Joining" );
+    	var inputname = document.getElementById('playername').value;
+        socket.emit('msg', {event: 'join', name: inputname } );
+		document.getElementById('hideOnJoin').style.visibility = "hidden";
+        console.log( 'Your name is ' + inputname );
+    });
+    
+    document.getElementById('ready').addEventListener('click', function(evt) {
+		console.log( "Ready" );
+        socket.emit('msg', {event: 'ready'});
+        this.style.visibility = "hidden";
+        waitingForStart();
+    });
+    
+    function waitingForStart() {
+    	if( waitCount == 0 ) {
+    		waitText = "Waiting for game to start";
+    	}
+    	else {
+    		waitText += ".";
+    	}
+    	document.getElementById('waitP').innerHTML = waitText;
+    	waitCount ++;
+    	if( waitCount == 4 ) {
+    		waitCount = 0;
+    	}
+    	timeout = setTimeout( waitingForStart, 1000 );
+    }
 
 </script>
-
 </body>
 </html>

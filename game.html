@@ -1,45 +1,194 @@
+<!doctype html>
 <html>
 <head>
-    <title>GAME</title>
-    <script src="/socket.io/socket.io.js"></script>
+<meta charset="UTF-8">
+<title>Button Mash v0.1</title>
+<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
-<button id="start">Start</button>
+<canvas id="canvas" width="100%" height="100%">
+Sorry, your browser doesn't support HTML5 canvasses. :(
+</canvas>
 
 <script>
-
-    var socket = io.connect('http://thawing-stream-1812.herokuapp.com/game');
+    var socket = io.connect('http://localhost:5000/game');//thawing-stream-1812.herokuapp.com/game');
 
     socket.on('msg', function(msg) {
         var event = msg.event,
-            playerid = msg.playerid;
+            playerid = msg.playerid,
+			name = null;
+            if( msg.hasOwnProperty('name') ) {
+			    name = msg.name;
+            }
         
-        switch(event) {
-            case 'join':
-                
-                console.log('player ' + playerid + ' joined the game!');
-                
-                break;
-            
-            case 'leave':
-                
-                console.log('player ' + playerid + ' left the game!');
-                
-                break;
-
-            case 'tap':
-
-                console.log('player ' + playerid + ' tapped!');
-
-                break;
-        }
+			switch(event) {
+				case 'join':
+					console.log( "Player " + name + " has joined!" );
+					addPlayer( playerid, name );
+					break;
+				case 'leave':
+					if( playerid in players ) {
+						console.log( "Player lost" );
+						losePlayer( playerid );
+					}
+					break;
+				case 'ready':
+					playerReady( playerid );
+					break;
+				case 'tap':
+					playerTap( playerid );
+					break;
+			}
     });
 
-    document.getElementById('start').addEventListener('click', function(evt) {
-        socket.emit('msg', {event: 'start'});
-    });
+	window.addEventListener('load', eventWindowLoaded, false);
+	function eventWindowLoaded() {
+		CanvasInit();
+	}
+	var canvasRef;
+	var context = null;
+	var winW;
+	var winH;
+	var finishLine;
 
+	var gameState = "waiting"; // waiting, ready, running, finished
+	var currentMenu = null;
+	var winningCount = 200;
+	var countdownVal = '';
+	var timeout;
+	var interval;
+	var players = {};
+	var playerNum = 0;
+	
+	function CanvasInit() {		
+		canvasRef = document.getElementById('canvas');
+	
+		winH = window.innerHeight;
+		winW = window.innerWidth;
+		finishLine = winW - 50;
+		console.log( finishLine );
+		canvasRef.height = winH;
+		canvasRef.width  = winW;
+	
+		context = canvasRef.getContext('2d');
+	
+		interval = setInterval( draw, 33 );
+	}
+
+	function addPlayer( id, name ) {
+		playerNum ++;
+		var playerColor = xRgbToHex(Math.floor(Math.random()*255),Math.floor(Math.random()*255),Math.floor(Math.random()*255));
+		players[id] = { position: playerNum - 1, name: name, color: playerColor, count: 0, ready: 0 };
+	}
+	function losePlayer( id ) {
+		playerNum --;
+		delete players[id];
+	}
+	function playerReady( id ) {
+		if( players[id].ready == 0 ) {
+			players[id].ready = 1;
+		}
+		console.log( 'Player ' + players[id].name + ' is ready!' );
+		var readyCount = 0;
+		for( var id in players ) {
+			readyCount += players[id].ready;
+		}
+		if( readyCount == playerNum ) {
+			socket.emit('msg', {event: 'start'});
+		}
+	}
+	function playerTap( id ) {
+		players[id].count ++;
+	}
+	function startGame() {
+		console.log( 'starting the game!' );
+	}
+	function drawPlayers() {
+		boxWidth = winH / ( ( playerNum * 2 ) + 1);
+		for( var id in players ) {
+			var index = players[id].position;
+			var name = players[id].name;
+			var color = players[id].color;
+			var progress = players[id].count / winningCount;
+			var boxY = boxWidth + ( index * 2 * boxWidth );
+			var boxX = xLerp(10, finishLine, progress );
+			context.fillStyle = color;
+			context.fillRect(boxX,boxY,boxWidth,boxWidth);
+			var nameX = boxX + ( boxWidth / 2 );
+			var nameY = boxY - 20;
+			context.fillStyle = 'red';
+			context.textAlign = 'center';
+			context.textBaseline = 'middle';
+			context.font = '40px _sans'; // use 20 pixel sans serif font
+			context.fillText(name,nameX,nameY); // write text
+		}
+	}
+	function drawCountDown() {
+		context.clearRect( winW/4, winH/4, winW/2, winH/2 );
+		var countdownText = 'Starting game in...'
+		var textX = winW / 2;
+		var textY = winH / 2;
+		context.fillStyle = 'white';
+		context.textAlign = 'center';
+		context.textBaseline = 'middle';
+		context.font = '50px _sans'; // use 20 pixel sans serif font
+		context.fillText(countdownText,textX,textY); // write text
+		context.font = '75px _sans'; // use 20 pixel sans serif font
+		context.fillText(countdownVal,textX,textY + 75); // write text
+		if( countdownVal == '' ) {
+			countdownVal = 3;
+			timeout = setTimeout( countDown, 1000 );
+		}
+		else {
+			countdownVal --;
+			if( countdownVal > 0 ) {
+				timeout = setTimeout( countDown, 1000 );
+			}
+			else {
+				startGame();
+			}
+		}
+	
+	}
+	function drawBackground() {
+		context.clearRect(0,0,winW,winH);
+		context.fillStyle = 'black';
+		context.fillRect(0,0,winW,winH);
+	}
+	function drawFinishLine() {
+		context.fillStyle = 'white';
+		context.fillRect(finishLine-20,0,40,winH);
+	}
+	function draw() {
+		drawBackground();
+		drawFinishLine();
+		drawPlayers();
+		switch( gameState ) {
+			case "waiting":
+			
+			break;
+			case "ready":
+		
+			break;
+			case "running":
+		
+			break;
+			case "finished":
+		
+			break;
+		}
+	}
+	function xTime() {
+		var d = new Date();
+		return( d.getTime() );
+	}
+	function xLerp( v0, v1, t ) {
+		return(Math.floor( ( v0*(1-t) )+ ( v1*t ) ));
+	}
+	function xRgbToHex(r, g, b) {
+		return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+	}
 </script>
 
 </body>
