@@ -95,7 +95,7 @@ button:active {
             case 'stop':
                 document.getElementById('touchArea').style.visibility = "hidden";
                 if( msg.winName == playerName ) {
-                	document.getElementById('winP').innerHTML = 'You WON!!!';
+                	document.getElementById('winP').innerHTML = 'You WON!!!;
 				}
 				else {
 					document.getElementById('winP').innerHTML = ':(';
@@ -122,7 +122,7 @@ button:active {
 	//setting the events listeners
 	$touchArea.on('touchstart mousedown',function (e){
 		e.preventDefault();
-		$('#touchText').text('OUCH!');
+		$('#touchText').text('HIT!');
 		/*// caching the current x
 		cachedX = e.pageX;
 		// caching the current y

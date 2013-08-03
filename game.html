@@ -125,7 +125,7 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 		for( var id in players ) {
 			readyCount += players[id].ready;
 		}
-		if( readyCount == playerNum ) {
+		if( readyCount == playerNum && playerNum > 1) {
 			getReady();
 		}
 		draw();
@@ -164,7 +164,7 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 		playerNum = 0;
 		socket.emit('msg', {event: 'stop', winName: winningPlayer});
 		draw();
-		gameTimeout = setTimeout(restartGame,1000);
+		gameTimeout = setTimeout(restartGame,10000);
 	}
 	function restartGame() {
 		clearTimeout(gameTimeout);
@@ -258,10 +258,10 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 				context.textAlign = 'center';
 				context.textBaseline = 'middle';
 				context.font = '250px _sans';
-				context.fillText(winningPlayer,textX,textY);
+				context.fillText(winningPlayer,textX,textY - 250);
 				context.fillStyle = 'white';
 				context.font = '100px _sans';
-				context.fillText(messageText,textX,textY + 250);
+				context.fillText(messageText,textX,textY + 100);
 				break;
 		}
 	}
