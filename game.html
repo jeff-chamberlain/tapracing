@@ -225,10 +225,10 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 				context.fillStyle = 'green';
 				context.textAlign = 'center';
 				context.textBaseline = 'middle';
-				context.font = '60px _sans';
-				context.fillText(joinText,textX,textY-200);
+				context.font = '30px _sans';
+				context.fillText(joinText,textX,textY-100);
 				context.fillStyle = 'white';
-				context.font = '50px _sans';
+				context.font = '25px _sans';
 				context.fillText(messageText,textX,textY);
 				if( playerNum > 1 ) {
 					var readyText = "Everyone press 'Ready!' to start the game!";
@@ -239,17 +239,17 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 				context.fillStyle = 'white';
 				context.textAlign = 'center';
 				context.textBaseline = 'middle';
-				context.font = '50px _sans';
+				context.font = '25px _sans';
 				context.fillText(messageText,textX,textY);
-				context.font = '100px _sans';
-				context.fillText(countdownVal,textX,textY + 100);
+				context.font = '50px _sans';
+				context.fillText(countdownVal,textX,textY + 50);
 				break;
 			case "running":
 				if( showGo ) {
 					context.fillStyle = 'green';
 					context.textAlign = 'center';
 					context.textBaseline = 'middle';
-					context.font = '150px _sans';
+					context.font = '75px _sans';
 					context.fillText(messageText,textX,textY);
 				}
 				break;
@@ -257,11 +257,11 @@ Sorry, your browser doesn't support HTML5 canvasses. :(
 				context.fillStyle = '#FDD017';
 				context.textAlign = 'center';
 				context.textBaseline = 'middle';
-				context.font = '250px _sans';
-				context.fillText(winningPlayer,textX,textY - 250);
+				context.font = '125px _sans';
+				context.fillText(winningPlayer,textX,textY - 125);
 				context.fillStyle = 'white';
-				context.font = '100px _sans';
-				context.fillText(messageText,textX,textY + 100);
+				context.font = '50px _sans';
+				context.fillText(messageText,textX,textY + 50);
 				break;
 		}
 	}
