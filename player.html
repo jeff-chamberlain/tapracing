@@ -104,10 +104,9 @@ button:active {
         }
     });
     
-    window.addEventListener('unload', depart, false);
-    function depart() {
+    $(window).unload(function() {
 		socket.emit('msg', {event: 'leave'});
-	};
+	});
 	
 	var timeout = null;
 	var waitText = "Waiting for game to start";
